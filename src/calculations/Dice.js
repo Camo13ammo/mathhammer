@@ -39,3 +39,9 @@ export const interpolateD6 = (minRollVal) => {
 export const modifyMinRequiredRoll = (originalMinRoll, modifier) => {
   return Math.max(1, originalMinRoll - modifier);
 };
+
+export const RerollType = {
+  NONE: 'NONE',
+  ONES: 'ONES',
+  ALL: 'ALL',
+};

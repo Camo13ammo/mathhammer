@@ -1,6 +1,11 @@
 import { Chance } from 'chance';
 
-import {interpolateDie, interpolateD6, modifyMinRequiredRoll} from 'calculations/Dice';
+import {
+  interpolateDie,
+  interpolateD6,
+  modifyMinRequiredRoll,
+  RerollType
+} from 'calculations/Dice';
 
 describe('Dice', () => {
 
@@ -52,6 +57,15 @@ describe('Dice', () => {
       expect(modifyMinRequiredRoll(4, -3)).toEqual(7);
     });
 
+  });
+
+  describe('RerollTypes', () => {
+    it ('is an object to help define various reroll types', () => {
+      expect(typeof RerollType).toBe('object');
+      expect(RerollType.NONE).toEqual('NONE');
+      expect(RerollType.ONES).toEqual('ONES');
+      expect(RerollType.ALL).toEqual('ALL');
+    });
   });
 
 });

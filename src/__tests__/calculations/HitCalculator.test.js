@@ -1,5 +1,6 @@
 import { Chance } from 'chance';
 
+import { RerollType } from 'calculations/Dice';
 import HitCalculator, { AUTO_HIT } from 'calculations/HitCalculator';
 
 describe('AUTO_HIT', () => {
@@ -15,17 +16,17 @@ describe('HitCalculator', () => {
   it('is constructed with a builder', () => {
     const expectedAttacks = random.integer({min: 2});
     const expectedSkill = random.integer({min: 2});
-    const expectedRerollMaxValue = random.integer({min: 2});
+    const expectedRerollOn = RerollType.ONES;
     const expectedHitModifier = random.integer();
     const hitCalculator = new HitCalculator.Builder()
       .withNumOfAttacks(expectedAttacks)
       .withSkill(expectedSkill)
-      .withRerollMaxValue(expectedRerollMaxValue)
+      .withRerollOn(expectedRerollOn)
       .withHitModifier(expectedHitModifier)
       .build();
     expect(hitCalculator.attacks).toEqual(expectedAttacks);
     expect(hitCalculator.skill).toEqual(expectedSkill);
-    expect(hitCalculator.rerollMaxValue).toEqual(expectedRerollMaxValue);
+    expect(hitCalculator.rerollOn).toEqual('ONES');
     expect(hitCalculator.hitModifier).toEqual(expectedHitModifier);
   });
 
@@ -102,14 +103,14 @@ describe('HitCalculator', () => {
       const hitCalculator1 = new HitCalculator.Builder()
         .withSkill(4)
         .withHitModifier(0)
-        .withRerollMaxValue(1)
+        .withRerollOn(RerollType.ONES)
         .build();
       expect(hitCalculator1.getModifiedRerollMaxValue()).toEqual(1);
 
       const hitCalculator2 = new HitCalculator.Builder()
         .withSkill(4)
         .withHitModifier(0)
-        .withRerollMaxValue(3)
+        .withRerollOn(RerollType.ALL)
         .build();
       expect(hitCalculator2.getModifiedRerollMaxValue()).toEqual(3);
     });
@@ -118,7 +119,7 @@ describe('HitCalculator', () => {
       const hitCalculator = new HitCalculator.Builder()
         .withSkill(4)
         .withHitModifier(-2)
-        .withRerollMaxValue(3)
+        .withRerollOn(RerollType.ALL)
         .build();
       expect(hitCalculator.getModifiedRerollMaxValue()).toEqual(3);
     });
@@ -127,7 +128,7 @@ describe('HitCalculator', () => {
       const hitCalculator = new HitCalculator.Builder()
         .withSkill(4)
         .withHitModifier(2)
-        .withRerollMaxValue(3)
+        .withRerollOn(RerollType.ALL)
         .build();
       expect(hitCalculator.getModifiedRerollMaxValue()).toEqual(1);
     });
@@ -140,7 +141,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(4)
         .withHitModifier(0)
-        .withRerollMaxValue(1)
+        .withRerollOn(RerollType.ONES)
         .build();
       expect(hitCalculator1.getRerollHits()).toEqual(0.5);
 
@@ -148,7 +149,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(4)
         .withHitModifier(-2)
-        .withRerollMaxValue(3)
+        .withRerollOn(RerollType.ALL)
         .build();
       expect(hitCalculator2.getRerollHits()).toEqual(0.5);
 
@@ -156,7 +157,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(10)
         .withSkill(2)
         .withHitModifier(0)
-        .withRerollMaxValue(1)
+        .withRerollOn(RerollType.ONES)
         .build();
       expect(hitCalculator3.getRerollHits()).toBeCloseTo(1.3888);
     });
@@ -169,7 +170,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(5)
         .withHitModifier(0)
-        .withRerollMaxValue(4)
+        .withRerollOn(RerollType.ALL)
         .build();
       expect(hitCalculator1.getTotalAttacksWithRerolls()).toEqual(10);
 
@@ -177,7 +178,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(4)
         .withHitModifier(0)
-        .withRerollMaxValue(1)
+        .withRerollOn(RerollType.ONES)
         .build();
       expect(hitCalculator2.getTotalAttacksWithRerolls()).toEqual(7);
 
@@ -185,7 +186,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(10)
         .withSkill(2)
         .withHitModifier(0)
-        .withRerollMaxValue(1)
+        .withRerollOn(RerollType.ONES)
         .build();
       expect(hitCalculator3.getTotalAttacksWithRerolls()).toBeCloseTo(11.666);
     });
@@ -197,7 +198,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(6)
         .withHitModifier(-1)
-        .withRerollMaxValue(0)
+        .withRerollOn(RerollType.NONE)
         .withMinTriggerValue(5)
         .withAdditionalAttacksOnTrigger(0)
         .withAdditionalHitsOnTrigger(0)
@@ -209,7 +210,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(6)
         .withHitModifier(3)
-        .withRerollMaxValue(0)
+        .withRerollOn(RerollType.NONE)
         .withMinTriggerValue(2)
         .withAdditionalAttacksOnTrigger(0)
         .withAdditionalHitsOnTrigger(0)
@@ -225,7 +226,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(4)
         .withSkill(6)
         .withHitModifier(2)
-        .withRerollMaxValue(3)
+        .withRerollOn(RerollType.ALL)
         .withMinTriggerValue(5)
         .withAdditionalAttacksOnTrigger(0)
         .withAdditionalHitsOnTrigger(0)
@@ -241,7 +242,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(4)
         .withSkill(6)
         .withHitModifier(2)
-        .withRerollMaxValue(3)
+        .withRerollOn(RerollType.ALL)
         .withMinTriggerValue(5)
         .withAdditionalAttacksOnTrigger(0)
         .withAdditionalHitsOnTrigger(2)
@@ -257,7 +258,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(4)
         .withSkill(6)
         .withHitModifier(2)
-        .withRerollMaxValue(3)
+        .withRerollOn(RerollType.ALL)
         .withMinTriggerValue(5)
         .withAdditionalAttacksOnTrigger(3)
         .withAdditionalHitsOnTrigger(0)
@@ -273,31 +274,13 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(4)
         .withSkill(6)
         .withHitModifier(2)
-        .withRerollMaxValue(3)
+        .withRerollOn(RerollType.ALL)
         .withMinTriggerValue(5)
         .withAdditionalAttacksOnTrigger(3)
         .withAdditionalHitsOnTrigger(0)
         .withMortalsInsteadOnTrigger(3)
         .build();
       expect(hitCalculator1.getMortalWoundTriggers()).toEqual(4);
-    });
-  });
-
-  describe('Get Mortal Wounds', () => {
-
-    it('gets the total mortal wounds instead of hits', () => {
-      const hitCalculator1 = new HitCalculator.Builder()
-        .withNumOfAttacks(6)
-        .withSkill(4)
-        .withHitModifier(0)
-        .withRerollMaxValue(0)
-        .withMinTriggerValue(6)
-        .withAdditionalAttacksOnTrigger(0)
-        .withAdditionalHitsOnTrigger(1)
-        .withMortalsInsteadOnTrigger(3)
-        .build();
-      expect(hitCalculator1.getTotalHits()).toEqual(3);
-      expect(hitCalculator1.getTotalMortalWounds()).toBeCloseTo(3);
     });
   });
 
@@ -308,7 +291,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(4)
         .withHitModifier(0)
-        .withRerollMaxValue(3)
+        .withRerollOn(RerollType.ALL)
         .withMinTriggerValue(0)
         .withAdditionalAttacksOnTrigger(0)
         .withAdditionalHitsOnTrigger(0)
@@ -320,7 +303,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(AUTO_HIT)
         .withHitModifier(-2)
-        .withRerollMaxValue(3)
+        .withRerollOn(RerollType.ONES)
         .withMinTriggerValue(0)
         .withAdditionalAttacksOnTrigger(0)
         .withAdditionalHitsOnTrigger(0)
@@ -332,7 +315,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(5)
         .withHitModifier(-2)
-        .withRerollMaxValue(4)
+        .withRerollOn(RerollType.ALL)
         .withMinTriggerValue(0)
         .withAdditionalAttacksOnTrigger(0)
         .withAdditionalHitsOnTrigger(0)
@@ -344,7 +327,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(4)
         .withHitModifier(2)
-        .withRerollMaxValue(3)
+        .withRerollOn(RerollType.ALL)
         .withMinTriggerValue(0)
         .withAdditionalAttacksOnTrigger(0)
         .withAdditionalHitsOnTrigger(0)
@@ -356,7 +339,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(6)
         .withHitModifier(0)
-        .withRerollMaxValue(5)
+        .withRerollOn(RerollType.ALL)
         .withMinTriggerValue(5)
         .withAdditionalAttacksOnTrigger(3)
         .withAdditionalHitsOnTrigger(0)
@@ -368,7 +351,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(5)
         .withHitModifier(-2)
-        .withRerollMaxValue(1)
+        .withRerollOn(RerollType.ONES)
         .withMinTriggerValue(3)
         .withAdditionalAttacksOnTrigger(0)
         .withAdditionalHitsOnTrigger(3)
@@ -380,7 +363,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(4)
         .withHitModifier(2)
-        .withRerollMaxValue(3)
+        .withRerollOn(RerollType.ALL)
         .withMinTriggerValue(5)
         .withAdditionalAttacksOnTrigger(3)
         .withAdditionalHitsOnTrigger(2)
@@ -392,7 +375,7 @@ describe('HitCalculator', () => {
         .withNumOfAttacks(6)
         .withSkill(6)
         .withHitModifier(-1)
-        .withRerollMaxValue(0)
+        .withRerollOn(RerollType.NONE)
         .withMinTriggerValue(5)
         .withAdditionalAttacksOnTrigger(0)
         .withAdditionalHitsOnTrigger(0)

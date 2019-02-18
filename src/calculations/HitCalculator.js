@@ -1,4 +1,4 @@
-import { interpolateD6, modifyMinRequiredRoll } from 'calculations/Dice';
+import { interpolateD6, modifyMinRequiredRoll, RerollType } from 'calculations/Dice';
 
 export const AUTO_HIT = 1;
 
@@ -11,7 +11,7 @@ export default class HitCalculator {
   constructor(builder) {
     this.attacks = builder.attacks;
     this.skill = builder.skill;
-    this.rerollMaxValue = builder.rerollMaxValue;
+    this.rerollOn = builder.rerollOn;
     this.hitModifier = builder.hitModifier;
     this.minTriggerValue = builder.minTriggerValue;
     this.additionalHitsOnTrigger = builder.additionalHitsOnTrigger;
@@ -47,8 +47,20 @@ export default class HitCalculator {
    * @return the maximum value (inclusive) that permits a die to be rerolled.
    */
   getModifiedRerollMaxValue() {
-    // The reroll value or the modified skill. Prevents overlap
-    return Math.min(this.getModifiedSkill() - 1, this.rerollMaxValue);
+    if (this.skill === AUTO_HIT) return 0; // Cannot reroll on auto hit
+    let rerollMaxValue;
+    switch(this.rerollOn) {
+      case RerollType.ALL:
+        rerollMaxValue = Math.min(this.getModifiedSkill(), this.skill) - 1;
+        break;
+      case RerollType.ONES:
+        rerollMaxValue = 1;
+        break;
+      case RerollType.NONE:
+      default:
+        rerollMaxValue = 0;
+    }
+    return rerollMaxValue;
   }
 
   /**
@@ -108,7 +120,7 @@ export default class HitCalculator {
       .withNumOfAttacks(extraAttacks)
       .withSkill(this.skill)
       .withHitModifier(this.hitModifier)
-      .withRerollMaxValue(this.rerollMaxValue)
+      .withRerollOn(this.rerollOn)
       .withMinTriggerValue(0) // Non-recursive
       .withAdditionalAttacksOnTrigger(0)
       .withAdditionalHitsOnTrigger(0)
@@ -160,7 +172,7 @@ export default class HitCalculator {
       constructor() {
         this.attacks;
         this.skill;
-        this.rerollMaxValue = 0; // Default no rerolls
+        this.rerollOn = 0; // Default no rerolls
         this.hitModifier = 0; // Default no modifier
         this.minTriggerValue;
         this.additionalAttacksOnTrigger;
@@ -186,12 +198,9 @@ export default class HitCalculator {
 
       /**
        * Specifies the max dice value that permits a reroll
-       * e.g. for rerolls of 1, rerollMaxValue = 1
-       *      for rerolls of 1's or 2's rerollMaxValue = 2
-       *      for reroll all misses of BS 4+ rerollMaxValue = 3
        */
-      withRerollMaxValue(rerollMaxValue) {
-        this.rerollMaxValue = rerollMaxValue;
+      withRerollOn(rerollOn) {
+        this.rerollOn = rerollOn;
         return this;
       }
 
