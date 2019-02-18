@@ -1,4 +1,4 @@
-import {interpolateD6, modifyMinRequiredRoll} from 'calculations/Dice';
+import { interpolateD6, modifyMinRequiredRoll } from 'calculations/Dice';
 
 export const AUTO_HIT = 1;
 
@@ -10,25 +10,25 @@ export default class HitCalculator {
 
   constructor(builder) {
     this.attacks = builder.attacks;
-    this.attackSkill = builder.attackSkill;
+    this.skill = builder.skill;
     this.rerollMaxValue = builder.rerollMaxValue;
     this.hitModifier = builder.hitModifier;
     this.minTriggerValue = builder.minTriggerValue;
     this.additionalHitsOnTrigger = builder.additionalHitsOnTrigger;
     this.additionalAttacksOnTrigger = builder.additionalAttacksOnTrigger;
-    this.mortalHitsOnTrigger = builder.mortalHitsOnTrigger;
+    this.mortalsInsteadOnTrigger = builder.mortalsInsteadOnTrigger;
   }
 
   /**
-   * Gets the modified attack skill based on the hit modifier
+   * Gets the modified skill based on the hit modifier
    * Autohitting weapons cannot be modified
    * Other attacks cannot be modified below 2
    *
-   * @return the modified attack skill based on the hit modifier
+   * @return the modified skill based on the hit modifier
    */
-  getModifiedAttackSkill() {
-    if (this.attackSkill === AUTO_HIT) return AUTO_HIT; // Auto hit unmodifiable
-    return Math.max(2, modifyMinRequiredRoll(this.attackSkill, this.hitModifier)); // No less than 2
+  getModifiedSkill() {
+    if (this.skill === AUTO_HIT) return AUTO_HIT; // Auto hit unmodifiable
+    return Math.max(2, modifyMinRequiredRoll(this.skill, this.hitModifier)); // No less than 2
   }
 
   /**
@@ -37,7 +37,7 @@ export default class HitCalculator {
    * @return the total average raw hits on initial roll
    */
   getRawHits() {
-    return this.attacks * (interpolateD6(this.getModifiedAttackSkill()));
+    return this.attacks * (interpolateD6(this.getModifiedSkill()));
   }
 
   /**
@@ -47,8 +47,8 @@ export default class HitCalculator {
    * @return the maximum value (inclusive) that permits a die to be rerolled.
    */
   getModifiedRerollMaxValue() {
-    // The reroll value or the modified attack skill. Prevents overlap
-    return Math.min(this.getModifiedAttackSkill() - 1, this.rerollMaxValue);
+    // The reroll value or the modified skill. Prevents overlap
+    return Math.min(this.getModifiedSkill() - 1, this.rerollMaxValue);
   }
 
   /**
@@ -69,9 +69,72 @@ export default class HitCalculator {
     return this.attacks * ((this.getModifiedRerollMaxValue() / 6) + 1);
   }
 
-  // TODO - Triggers
+  /**
+   * Gets the modified dice roll required to trigger
+   *
+   * @return the modified dice roll required to trigger
+   */
   getModifiedTriggerValue() {
     return modifyMinRequiredRoll(this.minTriggerValue, this.hitModifier);
+  }
+
+  /**
+   * Gets the average amount of rolls that will activate a trigger
+   *
+   * @return the average amount of rolls that will activate a trigger
+   */
+  getTotalTriggers() {
+    return this.getTotalAttacksWithRerolls() * interpolateD6(this.getModifiedTriggerValue());
+  }
+
+  /**
+   * Gets the extra hits from the bonus hits trigger
+   *
+   * @return the extra hits from the bonus hits trigger
+   */
+  getExtraHitsOnTrigger() {
+    return this.additionalHitsOnTrigger * this.getTotalTriggers();
+  }
+
+  /**
+   * Gets the total extra hits calculated from the extra attacks trigger
+   *
+   * @return the total extra hits calculated from the extra attacks trigger
+   */
+  getExtraAttackHitsOnTrigger() {
+    if (!this.minTriggerValue) return 0;
+    const extraAttacks = this.additionalAttacksOnTrigger * this.getTotalTriggers();
+    return new HitCalculator.Builder()
+      .withNumOfAttacks(extraAttacks)
+      .withSkill(this.skill)
+      .withHitModifier(this.hitModifier)
+      .withRerollMaxValue(this.rerollMaxValue)
+      .withMinTriggerValue(0) // Non-recursive
+      .withAdditionalAttacksOnTrigger(0)
+      .withAdditionalHitsOnTrigger(0)
+      .withMortalsInsteadOnTrigger(0)
+      .build()
+      .getTotalHits();
+  }
+
+  /**
+   * Gets the total triggers for the mortals-instead trigger
+   * Note: This trigger must be distinguished from the total triggers calcualtor
+   *    because it is used in subtraction of the total hits calculator
+   *
+   * @return the total triggers for the mortals-instead trigger
+   */
+  getMortalWoundTriggers() {
+    return this.mortalsInsteadOnTrigger ? this.getTotalTriggers() : 0;
+  }
+
+  /**
+   * Gets the total mortal wounds expected from the hit rolling phase
+   *
+   * @return the total mortal wounds expected from the hit rolling phase
+   */
+  getTotalMortalWounds() {
+    return this.mortalsInsteadOnTrigger * this.getMortalWoundTriggers();
   }
 
   /**
@@ -80,13 +143,11 @@ export default class HitCalculator {
    * @return the total average hits made during the attacking phase
    */
   getTotalHits() {
-    // const bonusHitsOnTrigger = this.additionalHitsOnTrigger * (this.getTotalAttacksWithRerolls() * (interpolateD6(this.getModifiedTriggerValue())));
-    // const bonusAttacksOnTrigger = this.getTotalAttacksWithRerolls() * (this.additionalAttacksOnTrigger * interpolateD6(this.getModifiedTriggerValue()));
-    // const bonusAttackHitsOnTrigger = bonusAttacksOnTrigger * (interpolateD6(this.getModifiedAttackSkill()));
-    // const bonusAttackRerollHitsOnTrigger = (this.getModifiedRerollMaxValue() / 6) * bonusAttackHitsOnTrigger;
-    // const mortalHitsOnTrigger = this.mortalHitsOnTrigger ? this.getTotalAttacksWithRerolls() * (interpolateD6(this.getModifiedTriggerValue())) : 0;
-    return this.getRawHits() + this.getRerollHits();
-     // + bonusHitsOnTrigger + bonusAttackHitsOnTrigger + bonusAttackRerollHitsOnTrigger - mortalHitsOnTrigger;
+    return Math.max(0, this.getRawHits()
+      + this.getRerollHits()
+      + this.getExtraHitsOnTrigger()
+      + this.getExtraAttackHitsOnTrigger()
+      - this.getMortalWoundTriggers());
   }
 
   /**
@@ -98,13 +159,13 @@ export default class HitCalculator {
 
       constructor() {
         this.attacks;
-        this.attackSkill;
+        this.skill;
         this.rerollMaxValue = 0; // Default no rerolls
         this.hitModifier = 0; // Default no modifier
         this.minTriggerValue;
         this.additionalAttacksOnTrigger;
         this.additionalHitsOnTrigger;
-        this.mortalHitsOnTrigger;
+        this.mortalsInsteadOnTrigger;
       }
 
       /**
@@ -117,10 +178,9 @@ export default class HitCalculator {
 
       /**
        * Specifies the required roll to hit
-       * TODO: Rename this to include WS as well
        */
-      withAttackSkill(attackSkill) {
-        this.attackSkill = attackSkill;
+      withSkill(skill) {
+        this.skill = skill;
         return this;
       }
 
@@ -143,26 +203,41 @@ export default class HitCalculator {
         return this;
       }
 
+      /**
+       * Specifies the minimum required value to activate triggers
+       */
       withMinTriggerValue(minTriggerValue) {
         this.minTriggerValue = minTriggerValue;
         return this;
       }
 
+      /**
+       * Specifies the total additional attacks received when a trigger is activated
+       */
       withAdditionalAttacksOnTrigger(additionalAttacksOnTrigger) {
         this.additionalAttacksOnTrigger = additionalAttacksOnTrigger;
         return this;
       }
 
+      /**
+       * Specifies the total additional hits received when a trigger is activated
+       */
       withAdditionalHitsOnTrigger(additionalHitsOnTrigger) {
         this.additionalHitsOnTrigger = additionalHitsOnTrigger;
         return this;
       }
 
-      withMortalHitsOnTrigger(mortalHitsOnTrigger) {
-        this.mortalHitsOnTrigger = mortalHitsOnTrigger;
+      /**
+       * Specifies the total mortal wounds inflicted when a trigger is activated
+       */
+      withMortalsInsteadOnTrigger(mortalsInsteadOnTrigger) {
+        this.mortalsInsteadOnTrigger = mortalsInsteadOnTrigger;
         return this;
       }
 
+      /**
+       * Generates the builder for the HitCalculator
+       */
       build() {
         return new HitCalculator(this);
       }
