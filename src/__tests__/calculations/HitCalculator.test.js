@@ -1,7 +1,7 @@
-import { Chance } from 'chance';
-
 import { RerollType } from 'calculations/Dice';
 import HitCalculator, { AUTO_HIT } from 'calculations/HitCalculator';
+
+import { Chance } from 'chance';
 
 describe('AUTO_HIT', () => {
   it('has a value of 1', () => {
