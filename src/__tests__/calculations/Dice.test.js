@@ -26,9 +26,9 @@ describe('Dice', () => {
       expect(interpolateDie(diceFaces, roll)).toEqual(0);
     });
 
-    it('throws an error when the minimum required roll value is <= 0', () => {
-      expect(() => interpolateDie(random.integer({min: 2}), -1)).toThrow();
-      expect(() => interpolateDie(random.integer({min: 2}), 0)).toThrow();
+    it('handles 0 and negative numbers', () => {
+      expect(interpolateDie(random.integer({min: 2}), -1)).toEqual(0);
+      expect(interpolateDie(random.integer({min: 2}), 0)).toEqual(0);
     });
 
   });
@@ -49,7 +49,7 @@ describe('Dice', () => {
 
   describe('modifyMinRequiredRoll', () => {
 
-    it ('modifies the minimum required dice roll needed for a particular event', () => {
+    it('modifies the minimum required dice roll needed for a particular event', () => {
       expect(modifyMinRequiredRoll(4, 1)).toEqual(3);
       expect(modifyMinRequiredRoll(4, 3)).toEqual(1);
       expect(modifyMinRequiredRoll(4, 5)).toEqual(1);
@@ -57,10 +57,14 @@ describe('Dice', () => {
       expect(modifyMinRequiredRoll(4, -3)).toEqual(7);
     });
 
+    it('does not modify 0', () => {
+      expect(modifyMinRequiredRoll(0, 4)).toEqual(0);
+    });
+
   });
 
   describe('RerollTypes', () => {
-    it ('is an object to help define various reroll types', () => {
+    it('is an object to help define various reroll types', () => {
       expect(typeof RerollType).toBe('object');
       expect(RerollType.NONE).toEqual('NONE');
       expect(RerollType.ONES).toEqual('ONES');

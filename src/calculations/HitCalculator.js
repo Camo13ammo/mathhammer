@@ -131,7 +131,7 @@ export default class HitCalculator {
 
   /**
    * Gets the total triggers for the mortals-instead trigger
-   * Note: This trigger must be distinguished from the total triggers calcualtor
+   * Note: This trigger must be distinguished from the total triggers calculator
    *    because it is used in subtraction of the total hits calculator
    *
    * @return the total triggers for the mortals-instead trigger
