@@ -369,7 +369,7 @@ describe('HitCalculator', () => {
         .withAdditionalHitsOnTrigger(2)
         .withMortalsInsteadOnTrigger(1)
         .build();
-      expect(hitCalculator7.getTotalHits()).toBeCloseTo(24.111);
+    expect(hitCalculator7.getTotalHits()).toBeCloseTo(24.111);
 
       const hitCalculator8 = new HitCalculator.Builder()
         .withNumOfAttacks(6)
@@ -382,6 +382,18 @@ describe('HitCalculator', () => {
         .withMortalsInsteadOnTrigger(3)
         .build();
       expect(hitCalculator8.getTotalHits()).toBeCloseTo(0);
+
+      const hitCalculator9 = new HitCalculator.Builder()
+        .withNumOfAttacks(6)
+        .withSkill(4)
+        .withHitModifier(0)
+        .withRerollOn(RerollType.NONE)
+        .withMinTriggerValue(0)
+        .withAdditionalAttacksOnTrigger(5)
+        .withAdditionalHitsOnTrigger(4)
+        .withMortalsInsteadOnTrigger(3)
+        .build();
+      expect(hitCalculator9.getTotalHits()).toEqual(3);
     });
 
   });

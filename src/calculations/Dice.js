@@ -10,9 +10,7 @@
  * @return the odds of rolling the minRollValue or higher
  */
 export const interpolateDie = (sidesOfDie, minRollVal) => {
-  if (minRollVal <= 0) {
-    throw new Error('Minimum roll value must be >= 1');
-  }
+  if (minRollVal <= 0) return 0;
   return Math.max(0, (sidesOfDie - (minRollVal - 1)) / sidesOfDie);
 };
 
@@ -37,6 +35,7 @@ export const interpolateD6 = (minRollVal) => {
  * @return the modified minimum required dice roll
  */
 export const modifyMinRequiredRoll = (originalMinRoll, modifier) => {
+  if (!originalMinRoll) return originalMinRoll;
   return Math.max(1, originalMinRoll - modifier);
 };
 
