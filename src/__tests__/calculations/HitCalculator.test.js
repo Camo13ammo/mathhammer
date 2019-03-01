@@ -369,7 +369,7 @@ describe('HitCalculator', () => {
         .withAdditionalHitsOnTrigger(2)
         .withMortalsInsteadOnTrigger(1)
         .build();
-    expect(hitCalculator7.getTotalHits()).toBeCloseTo(24.111);
+    expect(hitCalculator7.getTotalHits()).toBeCloseTo(45.889);
 
       const hitCalculator8 = new HitCalculator.Builder()
         .withNumOfAttacks(6)

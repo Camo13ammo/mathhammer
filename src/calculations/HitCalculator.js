@@ -114,16 +114,16 @@ export default class HitCalculator {
    * @return the total extra hits calculated from the extra attacks trigger
    */
   getExtraAttackHitsOnTrigger() {
-    if (!this.minTriggerValue) return 0;
+    if (!this.additionalAttacksOnTrigger) return 0;
     const extraAttacks = this.additionalAttacksOnTrigger * this.getTotalTriggers();
     return new HitCalculator.Builder()
       .withNumOfAttacks(extraAttacks)
       .withSkill(this.skill)
       .withHitModifier(this.hitModifier)
       .withRerollOn(this.rerollOn)
-      .withMinTriggerValue(0) // Non-recursive
+      .withMinTriggerValue(this.minTriggerValue)
       .withAdditionalAttacksOnTrigger(0)
-      .withAdditionalHitsOnTrigger(0)
+      .withAdditionalHitsOnTrigger(this.additionalHitsOnTrigger)
       .withMortalsInsteadOnTrigger(0)
       .build()
       .getTotalHits();
