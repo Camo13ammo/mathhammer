@@ -6,9 +6,9 @@ import { RerollType } from 'calculations/Dice';
 import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
 expect.extend({ toBeDeepCloseTo });
 
-describe('Some intial tests', () => {
+describe('Damage Calculator', () => {
 
-  it ('TESTS SOME SHIT', () => {
+  it ('Calculates damage', () => {
     const hitCalculator1 = new HitCalculator.Builder()
       .withNumOfAttacks(6)
       .withSkill(3)
@@ -27,8 +27,8 @@ describe('Some intial tests', () => {
       .withWoundModifier(0)
       .withAutoWoundCondition(AutoWound.NONE)
       .withAutoWoundOn(0)
-      .withMinTriggerValue(0)
-      .withExtraMortalsOnTrigger(0)
+      .withMinTriggerValue(6)
+      .withExtraMortalsOnTrigger(1)
       .withApModifierOnTrigger(0)
       .withDamageReplacementOnTrigger(0)
       .build();
@@ -41,12 +41,12 @@ describe('Some intial tests', () => {
       .withBaseAp(0)
       .build();
 
-    expect(damageCalculator.getTotalDamage()).toBeDeepCloseTo([0.89, 0.67, 0.44, 0.44, 0.44, 0.22], 2);
-
+    expect(damageCalculator.getMortalWounds()).toBeDeepCloseTo([0.67, 0.67, 0.67, 0.67, 0.67, 0.67], 2);
+    expect(damageCalculator.getTotalDamage()).toBeDeepCloseTo([1.55, 1.33, 1.11, 1.11, 1.11, 0.89], 2);
 
   });
 
-  it ('TESTS SOME SHIT', () => {
+  it ('Calculates more damage', () => {
     const hitCalculator1 = new HitCalculator.Builder()
       .withNumOfAttacks(6)
       .withSkill(3)
@@ -82,7 +82,7 @@ describe('Some intial tests', () => {
     expect(damageCalculator.getTotalDamage()).toBeDeepCloseTo([1.04, 0.78, 0.52, 0.52, 0.52, 0.26], 2);
   });
 
-  it ('TESTS SOME SHIT', () => {
+  it ('Calculates even more damage', () => {
     const hitCalculator1 = new HitCalculator.Builder()
       .withNumOfAttacks(6)
       .withSkill(6)
@@ -120,7 +120,7 @@ describe('Some intial tests', () => {
 
   });
 
-  it ('TESTS SOME SHIT', () => {
+  it ('Still calculates damage', () => {
     const hitCalculator1 = new HitCalculator.Builder()
       .withNumOfAttacks(6)
       .withSkill(7)

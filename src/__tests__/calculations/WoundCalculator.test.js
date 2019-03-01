@@ -57,7 +57,7 @@ describe('WoundCalculator', () => {
   describe('Unmodified Wound On', () => {
 
     it('gets an array of the required wound rolls without modification', () => {
-      const woundCalculator = new WoundCalculator.Builder()
+      const woundCalculator1 = new WoundCalculator.Builder()
         .withHits(6)
         .withStrength(4)
         .withRerollOn(RerollType.NONE)
@@ -65,7 +65,27 @@ describe('WoundCalculator', () => {
         .withAutoWoundCondition(AutoWound.NONE)
         .withAutoWoundOn(0)
         .build();
-      expect(woundCalculator.getUnmodifiedWoundsOn()).toEqual([3, 4, 5, 5, 5, 6]);
+      expect(woundCalculator1.getUnmodifiedWoundsOn()).toEqual([3, 4, 5, 5, 5, 6]);
+
+      const woundCalculator2 = new WoundCalculator.Builder()
+        .withHits(6)
+        .withStrength(4)
+        .withRerollOn(RerollType.NONE)
+        .withWoundModifier(0)
+        .withAutoWoundCondition(AutoWound.ALWAYS)
+        .withAutoWoundOn(4)
+        .build();
+      expect(woundCalculator2.getUnmodifiedWoundsOn()).toEqual([4, 4, 4, 4, 4, 4]);
+
+      const woundCalculator3 = new WoundCalculator.Builder()
+        .withHits(6)
+        .withStrength(4)
+        .withRerollOn(RerollType.NONE)
+        .withWoundModifier(0)
+        .withAutoWoundCondition(AutoWound.TOUGHNESS_GT_STRENGTH)
+        .withAutoWoundOn(4)
+        .build();
+      expect(woundCalculator3.getUnmodifiedWoundsOn()).toEqual([3, 4, 4, 4, 4, 4]);
     });
   });
 
@@ -397,7 +417,6 @@ describe('WoundCalculator', () => {
       expect(woundCalculator6.getTotalModifiedWounds()).toBeDeepCloseTo([7, 8, 9, 9, 9, 6.66], 2);
       expect(woundCalculator6.getTotalNormalWounds()).toBeDeepCloseTo([4.66, 2.66, 0, 0, 0, 0], 2);
 
-      // TODO: Add more tests as shit eventually maybe breaks
     });
   });
 
