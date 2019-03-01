@@ -3,6 +3,7 @@ import { interpolateD6, modifyMinRequiredRoll, RerollType } from 'calculations/D
 // Range of enemy toughnesses
 export const toughnesses = [3, 4, 5, 6, 7, 8];
 
+// Enum for the different types of auto wounds
 export const AutoWound = {
   ALWAYS: "ALWAYS",
   TOUGHNESS_GT_STRENGTH: "TOUGHNESS_GT_STRENGTH",
@@ -33,7 +34,7 @@ export const neededRollToWound = (strength, toughness) => {
       return 6;
       break;
   }
-}
+};
 
 /**
  * Class for calculating average wounds.
@@ -228,6 +229,7 @@ export default class WoundCalculator {
 
       /**
        * Specifies the number of hits made by the model
+       * @return this
        */
       withHits(hits) {
         this.hits = hits;
@@ -236,6 +238,7 @@ export default class WoundCalculator {
 
       /**
        * Specifies the required roll to wound
+       * @return this
        */
       withStrength(strength) {
         this.strength = strength;
@@ -244,6 +247,7 @@ export default class WoundCalculator {
 
       /**
        * Specifies the max dice value that permits a reroll
+       * @return this
        */
       withRerollOn(rerollOn) {
         this.rerollOn = rerollOn;
@@ -252,46 +256,76 @@ export default class WoundCalculator {
 
       /**
        * Specifies the wound modifier for all hits
+       * @return this
        */
       withWoundModifier(woundModifier) {
         this.woundModifier = woundModifier;
         return this;
       }
 
+      /**
+       * Specifies the auto wounding condition
+       * @return this
+       */
       withAutoWoundCondition(autoWoundCondition) {
         this.autoWoundCondition = autoWoundCondition;
         return this;
       }
 
+      /**
+       * Specifies the min required roll to auto wound
+       * @return this
+       */
       withAutoWoundOn(autoWoundOn) {
          this.autoWoundOn = autoWoundOn;
          return this;
       }
 
+      /**
+       * Specifies the minimum trigger value required on roll
+       * @return this
+       */
       withMinTriggerValue(minTriggerValue) {
         this.minTriggerValue = minTriggerValue;
         return this;
       }
 
+      /**
+       * Specifies the ap instead on trigger
+       * @return this
+       */
       withApModifierOnTrigger(apModifierOnTrigger) {
         this.apModifierOnTrigger = apModifierOnTrigger;
         return this;
       }
 
+      /**
+       * Specufies the damage instead on trigger
+       * @return this
+       */
       withDamageReplacementOnTrigger(damageReplacementOnTrigger) {
         this.damageReplacementOnTrigger = damageReplacementOnTrigger;
         return this;
       }
 
+      /**
+       * Specifies the extra mortal damage on trigger
+       * @return this
+       */
       withExtraMortalsOnTrigger(extraMortalsOnTrigger) {
         this.extraMortalsOnTrigger = extraMortalsOnTrigger;
         return this;
       }
 
+      /**
+       * builds the wound calculator based on the builder properties
+       * @return WoundCalculator
+       */
       build() {
         return new WoundCalculator(this);
       }
     }
+
     return Builder;
   }
 
