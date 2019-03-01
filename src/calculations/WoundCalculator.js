@@ -187,13 +187,12 @@ export default class WoundCalculator {
   }
 
   getTotalModifiedWounds() {
-    return this.getTotalTriggers()
-      .map((triggers, i) => {
-        const hasModifierTriggers = this.apModifierOnTrigger || this.damageReplacementOnTrigger;
-        const successfulWounds = this.getRawWounds()[i] + this.getRerollWounds()[i];
-        const modifiedWounds = this.getModifiedTriggerValue() >= this.getModifiedWoundsOn()[i] ? triggers : successfulWounds;
-        return hasModifierTriggers ? modifiedWounds : 0;
-      });
+    return this.getTotalTriggers().map((triggers, i) => {
+      const hasModifierTriggers = this.apModifierOnTrigger || this.damageReplacementOnTrigger;
+      const successfulWounds = this.getRawWounds()[i] + this.getRerollWounds()[i];
+      const modifiedWounds = this.getModifiedTriggerValue() >= this.getModifiedWoundsOn()[i] ? triggers : successfulWounds;
+      return hasModifierTriggers ? modifiedWounds : 0;
+    });
   }
 
   /**
