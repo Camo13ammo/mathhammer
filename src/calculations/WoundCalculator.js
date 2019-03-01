@@ -3,6 +3,12 @@ import { interpolateD6, modifyMinRequiredRoll, RerollType } from 'calculations/D
 // Range of enemy toughnesses
 export const toughnesses = [3, 4, 5, 6, 7, 8];
 
+export const AutoWound = {
+  ALWAYS: "ALWAYS",
+  TOUGHNESS_GT_STRENGTH: "TOUGHNESS_GT_STRENGTH",
+  NONE: "NONE",
+};
+
 /**
  * Translates strength/toughness to required wound roll
  *
@@ -40,6 +46,12 @@ export default class WoundCalculator {
     this.strength = builder.strength;
     this.rerollOn = builder.rerollOn;
     this.woundModifier = builder.woundModifier;
+    this.autoWoundCondition = builder.autoWoundCondition;
+    this.autoWoundOn = builder.autoWoundOn;
+    this.minTriggerValue = builder.minTriggerValue;
+    this.apModifierOnTrigger = builder.apModifierOnTrigger;
+    this.damageReplacementOnTrigger = builder.damageReplacementOnTrigger;
+    this.extraMortalsOnTrigger = builder.extraMortalsOnTrigger;
   }
 
   /**
@@ -48,7 +60,19 @@ export default class WoundCalculator {
    * @return array of unmodified required rolls needed to wound
    */
   getUnmodifiedWoundsOn() {
-    return toughnesses.map(toughness => neededRollToWound(this.strength, toughness));
+    return toughnesses.map((toughness, i) => {
+      const unmodifiedWoundOn = neededRollToWound(this.strength, toughness);
+      switch (this.autoWoundCondition) {
+        case AutoWound.ALWAYS:
+          return this.autoWoundOn;
+        case AutoWound.TOUGHNESS_GT_STRENGTH:
+          return toughnesses[i] > this.strength ? this.autoWoundOn : unmodifiedWoundOn;
+        case AutoWound.NONE:
+          return unmodifiedWoundOn;
+        default:
+          throw Error('Unknown AutoWound Type, ' + this.autoWoundCondition);
+      }
+    });
   }
 
   /**
@@ -57,8 +81,19 @@ export default class WoundCalculator {
    * @return array of modified required rolls needed to wound using the wound modifier
    */
   getModifiedWoundsOn() {
-    return this.getUnmodifiedWoundsOn()
-      .map(unmodifiedVal => Math.max(2, modifyMinRequiredRoll(unmodifiedVal, this.woundModifier)));
+    return this.getUnmodifiedWoundsOn().map((unmodifiedVal, i) => {
+      const modifiedWoundOn = Math.max(2, modifyMinRequiredRoll(unmodifiedVal, this.woundModifier));
+      switch (this.autoWoundCondition) {
+        case AutoWound.ALWAYS:
+          return this.autoWoundOn;
+        case AutoWound.TOUGHNESS_GT_STRENGTH:
+          return toughnesses[i] > this.strength ? this.autoWoundOn : modifiedWoundOn;
+        case AutoWound.NONE:
+          return modifiedWoundOn;
+        default:
+          throw Error('Unknown AutoWound Type, ' + this.autoWoundCondition);
+      }
+    });
   }
 
   /**
@@ -116,13 +151,60 @@ export default class WoundCalculator {
   }
 
   /**
-   * Gets an array of the total average wounds made based on enemy toughness
+   * Get the total quantity of rolls made during wounding phase, including rerolls
    *
-   * @return array of the total average wounds made based on enemy toughness
+   * @return array of the total rolls made during the wounding phase
    */
-  getTotalWounds() {
-    return toughnesses.map((t, i) => this.getRawWounds()[i]
-      + this.getRerollWounds()[i]);
+  getTotalWoundRolls() {
+    return this.getModifiedRerollMaxValues().map(reroll => this.hits * ((reroll / 6) + 1));
+  }
+
+  /**
+   * Gets the modified dice roll required to trigger
+   *
+   * @return the modified dice roll required to trigger
+   */
+  getModifiedTriggerValue() {
+    return modifyMinRequiredRoll(this.minTriggerValue, this.woundModifier);
+  }
+
+  /**
+   * Gets the average amount of rolls that will activate a trigger
+   *
+   * @return the average amount of rolls that will activate a trigger
+   */
+  getTotalTriggers() {
+    return this.getTotalWoundRolls().map(totalRolls => totalRolls  * interpolateD6(this.getModifiedTriggerValue()));
+  }
+
+  /**
+   * Gets the total mortal wounds expected from the wound rolling phase
+   *
+   * @return the total mortal wounds expected from the wound rolling phase
+   */
+  getTotalMortalWounds() {
+    return this.getTotalTriggers().map(mwTriggers => this.extraMortalsOnTrigger * mwTriggers);
+  }
+
+  getTotalModifiedWounds() {
+    return this.getTotalTriggers()
+      .map((triggers, i) => {
+        const hasModifierTriggers = this.apModifierOnTrigger || this.damageReplacementOnTrigger;
+        const successfulWounds = this.getRawWounds()[i] + this.getRerollWounds()[i];
+        const modifiedWounds = this.getModifiedTriggerValue() >= this.getModifiedWoundsOn()[i] ? triggers : successfulWounds;
+        return hasModifierTriggers ? modifiedWounds : 0;
+      });
+  }
+
+  /**
+   * Gets an array of the total average wound rolls made based on enemy toughness
+   *
+   * @return array of the total average wound rolls made based on enemy toughness
+   */
+  getTotalNormalWounds() {
+    return this.getRawWounds().map((rawWounds, i) => rawWounds
+      + this.getRerollWounds()[i]
+      - this.getTotalModifiedWounds()[i]);
   }
 
   /**
@@ -137,6 +219,12 @@ export default class WoundCalculator {
         this.strength;
         this.rerollOn = 0;
         this.woundModifier = 0; // Default no modifier
+        this.autoWoundCondition;
+        this.autoWoundOn;
+        this.minTriggerValue = 0; // Default no trigger
+        this.apModifierOnTrigger;
+        this.damageReplacementOnTrigger;
+        this.extraMortalsOnTrigger;
       }
 
       /**
@@ -164,10 +252,40 @@ export default class WoundCalculator {
       }
 
       /**
-       * Specifies the wound modifier for all attacks
+       * Specifies the wound modifier for all hits
        */
       withWoundModifier(woundModifier) {
         this.woundModifier = woundModifier;
+        return this;
+      }
+
+      withAutoWoundCondition(autoWoundCondition) {
+        this.autoWoundCondition = autoWoundCondition;
+        return this;
+      }
+
+      withAutoWoundOn(autoWoundOn) {
+         this.autoWoundOn = autoWoundOn;
+         return this;
+      }
+
+      withMinTriggerValue(minTriggerValue) {
+        this.minTriggerValue = minTriggerValue;
+        return this;
+      }
+
+      withApModifierOnTrigger(apModifierOnTrigger) {
+        this.apModifierOnTrigger = apModifierOnTrigger;
+        return this;
+      }
+
+      withDamageReplacementOnTrigger(damageReplacementOnTrigger) {
+        this.damageReplacementOnTrigger = damageReplacementOnTrigger;
+        return this;
+      }
+
+      withExtraMortalsOnTrigger(extraMortalsOnTrigger) {
+        this.extraMortalsOnTrigger = extraMortalsOnTrigger;
         return this;
       }
 
